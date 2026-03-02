@@ -63,17 +63,17 @@ class Main(Scene):
         ).scale(0.4)
 
         exTable.next_to(samples, DOWN)
-        exGroup = VGroup(samples, exTable)
-        self.play(Create(exGroup))
+        self.play(DrawBorderThenFill(exTable))
         self.wait()
+        exGroup = VGroup(samples, exTable)
 
         highlights: list[tuple[str, Mobject, Mobject]] = []
 
         for [name, x, y] in sampleAnimals:
             dot = Dot(ax.coords_to_point(x, y), color=GREEN_C)
             lines = ax.get_lines_to_point(ax.c2p(x, y))
-            self.add(dot)
-            chartGroup.add(dot);
+            self.play(Write(dot), run_time=0.2)
+            chartGroup.add(dot)
 
             if name in ["Lobo", "Leopardo"]:
                 highlights.append([name, dot, lines])
@@ -93,7 +93,27 @@ class Main(Scene):
             self.wait()
 
         oldView = VGroup(exGroup, chartGroup)
-        newView = VGroup(Text("X", color=BLUE_C).shift(LEFT*0.5), Text("Y", color=RED_C).shift(RIGHT*0.5))
+        X = Text("X", color=BLUE_C)
+        Y = Text("Y", color=RED_C)
 
-        self.play(Transform(oldView, newView))
+        newView = VGroup(X, Y).arrange(RIGHT, buff=0.3)
+
+        self.play(ReplacementTransform(oldView, newView))
         self.wait()
+
+        letters = [
+            ["Z", YELLOW],
+            ["M", BLUE],
+            ["N", RED],
+            ["P", GREEN],
+            ["A", TEAL],
+            ["B", PINK],
+            ["C", GOLD],
+            ["...=1536", RED]
+        ]
+
+        for letter, color in letters:
+            new_letter = Text(letter, color=color)
+            newView.add(new_letter)
+            self.play(Write(new_letter), newView.animate.arrange(RIGHT, buff=0.3))
+            self.wait(0.2)
