@@ -1,8 +1,8 @@
 # Educational Concept Strategist -- Memory
 
 ## Project Structure
-- Blueprints are stored in `/mnt/c/Users/lucas/source/repos/videos/claude/blueprints/{topic-slug}/teaching-blueprint.md`
-- First blueprint created: `llm-tokens`
+- Blueprints stored at `/mnt/c/Users/lucas/source/repos/videos/<concept-slug>/blueprint.md` (per CLAUDE.md folder structure rule)
+- Videos created: `llm-tokens`, `pythagorean-theorem`
 
 ## Effective Patterns Discovered
 
@@ -25,6 +25,27 @@
 ### Misconception Handling
 - Address the #1 misconception in the opening hook, not in a later "misconceptions" segment. This reframes the viewer's mental model from the start.
 - For remaining misconceptions, address each at the moment in the video where it naturally arises, not in a batch.
+
+### Short-Form Videos (60-120s)
+- Word budget: ~2.3 words/second for Portuguese narration. 90s = ~210 words max.
+- Max 3 learning objectives. Max 5 concept segments.
+- Silence is a tool: let key animations breathe for 2-3s without narration.
+- Scope discipline is critical. Explicitly list what NOT to include in production notes.
+- For math/geometry topics: visual proof ("proof without words") beats algebraic proof for beginner audiences.
+
+### Mid-Form Videos (3-4 min)
+- Word budget: ~2.5 words/second for Portuguese narration. 210s = ~540 words max.
+- Max 4 learning objectives. Max 6 concept segments.
+- One segment can be 2x longer than others IF subdivided into visual steps (e.g., BPE in 3 steps).
+- Place the densest segment at position 3 (flanked by concrete segments on both sides).
+- Include a "re-energizer" segment after the dense one (surprising examples, flash-card format).
+- For scope: cut practical implications before cutting core mechanism -- mechanism is the conceptual heart.
+
+### Audience: Brazilian Secondary Students (12-16)
+- Use "voce" (informal). Short sentences (max 15 words).
+- Tone: "professor jovem" -- direct, enthusiastic, not childish.
+- Define technical terms on first use but DO use proper terminology (cateto, hipotenusa, not dumbed-down substitutes).
+- Color-coding is essential for this audience: map concepts to colors and keep them consistent throughout.
 
 ## Topic Files
 - See `technical-explainer-patterns.md` for detailed notes on structuring technical concept videos.
