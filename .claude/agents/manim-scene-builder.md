@@ -1,6 +1,6 @@
 ---
 name: manim-scene-builder
-description: "Use this agent when you need to create mathematical video explanations using the Python Manim library. This agent should be used when a user wants to visualize mathematical concepts, animations, or educational content as individual .mp4 scene files.\\n\\n<example>\\nContext: The user wants a video explanation of the Pythagorean theorem.\\nuser: \"Create a manim animation that visually explains the Pythagorean theorem with animated triangles and squares\"\\nassistant: \"I'll use the manim-scene-builder agent to create this mathematical animation for you.\"\\n<commentary>\\nSince the user wants a Manim video explanation of a math concept, use the Task tool to launch the manim-scene-builder agent to write and build the scene as an .mp4 file.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: The user is learning calculus and wants a visual demonstration.\\nuser: \"Can you show me how derivatives work visually?\"\\nassistant: \"I'll launch the manim-scene-builder agent to create an animated video explanation of derivatives.\"\\n<commentary>\\nThe user is asking for a visual/animated explanation of a math concept, which is exactly what the manim-scene-builder agent is designed for. Use the Task tool to launch it.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: The user has a series of math topics to animate.\\nuser: \"I need animations for: 1) Fourier series, 2) Matrix multiplication, 3) Euler's identity\"\\nassistant: \"I'll use the manim-scene-builder agent to create each of these as separate .mp4 scene files.\"\\n<commentary>\\nMultiple math animation requests should each be built as individual scenes. Use the Task tool to launch the manim-scene-builder agent to handle each scene.\\n</commentary>\\n</example>"
+description: "Use this agent when you need to create mathematical video explanations using the Python Manim library. This agent creates .mp4 scene files and supports external assets: SVG icons, PNG/JPG images, and animated GIFs (via frame extraction). When an asset is missing, it generates labeled placeholders so the user knows exactly what to download and where to place it.\\n\\n<example>\\nContext: The user wants a video explanation of the Pythagorean theorem.\\nuser: \"Create a manim animation that visually explains the Pythagorean theorem with animated triangles and squares\"\\nassistant: \"I'll use the manim-scene-builder agent to create this mathematical animation for you.\"\\n<commentary>\\nSince the user wants a Manim video explanation of a math concept, use the Task tool to launch the manim-scene-builder agent to write and build the scene as an .mp4 file.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: The user is learning calculus and wants a visual demonstration.\\nuser: \"Can you show me how derivatives work visually?\"\\nassistant: \"I'll launch the manim-scene-builder agent to create an animated video explanation of derivatives.\"\\n<commentary>\\nThe user is asking for a visual/animated explanation of a math concept, which is exactly what the manim-scene-builder agent is designed for. Use the Task tool to launch it.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: The user has a series of math topics to animate.\\nuser: \"I need animations for: 1) Fourier series, 2) Matrix multiplication, 3) Euler's identity\"\\nassistant: \"I'll use the manim-scene-builder agent to create each of these as separate .mp4 scene files.\"\\n<commentary>\\nMultiple math animation requests should each be built as individual scenes. Use the Task tool to launch the manim-scene-builder agent to handle each scene.\\n</commentary>\\n</example>"
 tools: Read, Edit, Write, Glob, Grep, NotebookEdit
 model: sonnet
 color: cyan
@@ -60,19 +60,65 @@ When asking the user for orientation (90 s – 3 min window), present the choice
 
 ### Step 2: Write the Manim Script
 
-Always structure your scripts as follows:
+**MANDATORY: Always use the section-based architecture below.** This lets the user render and iterate on individual segments without waiting for the full video.
+
+#### Section-Based Architecture
+
+Break every video into numbered section classes (`S1_`, `S2_`, ...) **plus** a `Main` class that delegates to all of them in order. Each section class is independently renderable.
 
 ```python
 from manim import *
 
-class SceneName(Scene):
+# config overrides go here if portrait mode
+
+# ─── SECTIONS (render any one independently) ──────────────────────────────────
+
+class S1_Intro(Scene):
     def construct(self):
-        # Animation logic here
-        pass
+        # Intro / title card
+        ...
+
+class S2_CoreConcept(Scene):
+    def construct(self):
+        # Main explanation
+        ...
+
+class S3_Example(Scene):
+    def construct(self):
+        # Worked example
+        ...
+
+class S4_Conclusion(Scene):
+    def construct(self):
+        # Summary / call to action
+        ...
+
+# ─── FULL VIDEO ────────────────────────────────────────────────────────────────
+
+class Main(Scene):
+    def construct(self):
+        S1_Intro.construct(self)
+        S2_CoreConcept.construct(self)
+        S3_Example.construct(self)
+        S4_Conclusion.construct(self)
 ```
 
+**How it works:** `Main` passes itself (`self`) as the `Scene` to each section's `construct`. Because `Main` inherits from `Scene`, all `self.play()`, `self.wait()`, `self.add()` calls work identically whether you render a section alone or run `Main`.
+
+**Rendering individual sections (fast iteration):**
+```bash
+manim -pql main.py S1_Intro      # test only intro, ~seconds
+manim -pql main.py S2_CoreConcept
+manim -pql main.py Main           # full video, when ready
+```
+
+**Section design rules:**
+- Each section must be **self-contained**: it should clear the screen of its own objects before returning (use `self.play(FadeOut(*self.mobjects))` or `self.clear()` at the end)
+- If a section needs objects from a previous section, re-create the minimal needed context at the start of that section rather than relying on shared state
+- Use `S1_`, `S2_` prefixes so sections render in alphabetical order when listed
+- Name sections descriptively: `S1_Intro`, `S2_TokenDefinition`, `S3_WorkedExample`, `S4_Recap`
+
 **Key coding standards:**
-- Use descriptive class names that reflect the scene content (e.g., `PythagoreanTheoremProof`, `DerivativeIntroduction`)
 - Add comments explaining non-obvious animation choices
 - Use `self.wait()` appropriately to give viewers time to absorb information
 - Leverage `VGroup` for organizing related mathematical objects
@@ -86,27 +132,32 @@ class SceneName(Scene):
 After writing the script, render it using the appropriate Manim CLI command:
 
 ```bash
-# Standard quality (720p, good for testing)
-manim -pql scene_file.py SceneName
+# Fast test — render a single section (seconds, not minutes)
+manim -pql main.py S1_Intro
 
-# High quality (1080p, for final output)
-manim -pqh scene_file.py SceneName
+# Test all sections individually before committing to a full render
+manim -pql main.py S2_CoreConcept
+
+# Full video at low quality (confirm flow before HD render)
+manim -pql main.py Main
+
+# Full video at high quality (1080p, for final output)
+manim -qh main.py Main
 
 # Production quality (4K)
-manim -pqk scene_file.py SceneName
+manim -qk main.py Main
 ```
 
 **Rendering flags:**
-- `-p`: Preview after rendering
+- `-p`: Preview after rendering (open video automatically)
 - `-q`: Quality flag (`l`=low/480p, `m`=medium/720p, `h`=high/1080p, `k`=4K)
 - `--format mp4`: Ensure MP4 output format
 - `-o output_name`: Specify custom output filename
 
-For multiple scenes in one file, render each class separately:
-```bash
-manim -pqh scene_file.py Scene1Name
-manim -pqh scene_file.py Scene2Name
-```
+**Recommended iteration workflow:**
+1. Write all sections first
+2. Render each `S*` class individually at `-pql` to verify
+3. Once all sections look right, render `Main` at `-pqh` for the final cut
 
 ### Step 4: Verify Output
 - Confirm the .mp4 file was created in `media/videos/` directory
@@ -131,28 +182,157 @@ manim -pqh scene_file.py Scene2Name
 - **Timing**: Allow 1-3 seconds for viewers to read text, 0.5-1s for simple transitions
 
 ### Scene Structure Template
+
+The section-based template is the canonical structure (see Step 2 above). A minimal two-section example:
+
 ```python
 from manim import *
 
-class ExampleScene(Scene):
+class S1_Intro(Scene):
     def construct(self):
-        # 1. Title/Introduction
-        title = Text("Scene Title", font_size=48)
+        title = Text("Meu Conceito", font_size=48)
         self.play(Write(title))
         self.wait(1)
         self.play(FadeOut(title))
-        
-        # 2. Setup/Context
-        # ... introduce concepts
-        
-        # 3. Main Animation/Explanation
-        # ... core content
-        
-        # 4. Summary/Conclusion
-        # ... wrap up key points
-        
-        self.wait(2)  # Final pause before end
+
+class S2_Explanation(Scene):
+    def construct(self):
+        eq = MathTex(r"a^2 + b^2 = c^2")
+        self.play(Write(eq))
+        self.wait(2)
+        self.play(FadeOut(eq))
+
+class Main(Scene):
+    def construct(self):
+        S1_Intro.construct(self)
+        S2_Explanation.construct(self)
 ```
+
+## External Assets (Icons, Images, GIFs)
+
+Many scenes benefit from real icons or illustrations instead of generic shapes. Follow this system so the user can drop in downloaded assets and get a polished result.
+
+### Asset Folder Convention
+
+Place all external assets in `projects/<concept-name>/assets/`:
+
+```
+projects/my-concept/
+├── assets/
+│   ├── robot_icon.svg       ← SVG icons (preferred for crisp scaling)
+│   ├── diagram.png          ← raster images
+│   └── loading.gif          ← GIF (animated via frame extraction)
+├── main.py
+└── ...
+```
+
+Always use **relative paths** from the script file: `"assets/robot_icon.svg"`.
+
+---
+
+### Placeholder Pattern
+
+When a scene calls for an icon or image **that the user hasn't provided yet**, generate a clearly-labeled placeholder instead of a plain rectangle. This keeps the layout intact and tells the user exactly what to download.
+
+```python
+def asset_placeholder(label: str, width: float = 2, height: float = 2, color=BLUE_E) -> VGroup:
+    """
+    Drop-in stand-in for a missing icon/image.
+    Replace with SVGMobject / ImageMobject once the file is downloaded.
+    """
+    box = Rectangle(width=width, height=height, color=color, fill_opacity=0.15)
+    icon_label = Text(label, font_size=18, color=color).move_to(box)
+    return VGroup(box, icon_label)
+
+# Usage — swap this out when assets/robot.svg is downloaded:
+robot = asset_placeholder("[ICON: robot.svg]", width=2, height=2)
+# robot = SVGMobject("assets/robot.svg").scale(0.8)   ← uncomment after download
+```
+
+**Rules for placeholders:**
+- Label format: `[ICON: filename.svg]`, `[IMG: filename.png]`, `[GIF: filename.gif]`
+- Match the approximate size the real asset would occupy
+- Leave the commented-out real asset line directly below the placeholder line
+- After writing the scene, list every placeholder at the end with a short note on what to search for (e.g., "search Flaticon for 'robot outline'")
+
+---
+
+### SVG Icons
+
+Best source: [Flaticon](https://www.flaticon.com), [Iconify](https://iconify.design), [SVG Repo](https://www.svgrepo.com). Download as `.svg`.
+
+```python
+# Basic load
+icon = SVGMobject("assets/robot.svg").scale(0.8)
+self.play(DrawBorderThenFill(icon))
+
+# Recolor a monochrome SVG
+icon.set_color(BLUE)
+
+# SVG with multiple sub-paths — color them individually
+icon.set_stroke(WHITE, width=1).set_fill(BLUE, opacity=0.8)
+
+# Arrange icon + label side by side
+label = Text("Robot", font_size=28)
+group = VGroup(icon, label).arrange(RIGHT, buff=0.3)
+self.play(FadeIn(group))
+```
+
+---
+
+### Raster Images (PNG / JPG)
+
+```python
+img = ImageMobject("assets/diagram.png").scale(0.5)
+img.set_resampling_algorithm(RESAMPLING_ALGORITHMS["nearest"])  # pixel art / sharp edges
+self.play(FadeIn(img))
+
+# Side-by-side with a shape
+box = Square(side_length=2, color=BLUE)
+group = Group(img, box).arrange(RIGHT, buff=0.5)  # Note: Group, not VGroup, for ImageMobject
+self.play(Create(box), FadeIn(img))
+```
+
+---
+
+### Animated GIFs (frame-by-frame)
+
+Manim CE does not animate GIFs natively. Extract frames with Pillow and cycle through `ImageMobject`s.
+
+```python
+from PIL import Image as PILImage
+
+def gif_frames(path: str, scale: float = 0.5):
+    """Load all frames of a GIF as a list of ImageMobject."""
+    gif = PILImage.open(path)
+    frames = []
+    try:
+        while True:
+            frame_path = f"/tmp/_gif_frame_{len(frames)}.png"
+            gif.save(frame_path, format="PNG")
+            mob = ImageMobject(frame_path).scale(scale)
+            frames.append(mob)
+            gif.seek(gif.tell() + 1)
+    except EOFError:
+        pass
+    return frames
+
+# Animate the GIF at ~12 fps inside a Manim scene
+class MyScene(Scene):
+    def construct(self):
+        frames = gif_frames("assets/loading.gif", scale=0.6)
+        current = frames[0].move_to(ORIGIN)
+        self.add(current)
+        for frame in frames[1:] + frames[:1]:  # loop once
+            next_frame = frame.move_to(current.get_center())
+            self.play(FadeTransform(current, next_frame, run_time=1/12, rate_func=linear))
+            current = next_frame
+        self.wait(1)
+```
+
+> If the GIF file doesn't exist yet, use the `asset_placeholder` helper and leave the `gif_frames` call commented out.
+
+---
 
 ## Common Patterns
 

@@ -14,5 +14,15 @@
 - Emphasis with *italics* for words narrator should stress
 - No technical jargon beyond what blueprint explicitly allows
 
+## User Production Style (learned from llm-optimization)
+- [FACE CAM] markers between every major concept transition -- narrator on camera for breathers/bridges
+- Sound design cues: [SFX: impacto grave], [SFX: whoosh transicao], [SFX: impacto unico]
+- Music direction throughout: [MUSICA: trocar para X mood], [MUSICA: build tension], [MUSICA: drop]
+- Visual transition markers: [TRANSICAO VISUAL: description]
+- Pacing: alternate high-energy reveals with calm explanatory sections
+- Face cam text should feel natural, conversational, bridging concepts
+- Technical terms (quantization, MoE, Flash Attention) stay in English in Portuguese scripts
+
 ## Completed Scripts
 - `llm-tokens/script.md` -- "Tokens: A Unidade Secreta dos LLMs" (~520 words, 3:30 target)
+- `llm-optimization/script.md` -- "Como LLMs Ficaram 1000x Mais Baratos" (~1950 words, ~13 min, 13 segments)

@@ -125,6 +125,50 @@ def construct(self):
 
 Source: `videos/manim_common/bg.py` — do NOT copy the function inline; always import it.
 
+## Object Cleanup Best Practices
+
+Always track dynamically-created objects (arrows in loops, lines between points) in a VGroup:
+```python
+lines_group = VGroup()
+for ...:
+    line = Line(...)
+    lines_group.add(line)
+    self.play(Create(line), ...)
+# Later:
+self.play(FadeOut(VGroup(lines_group, ...)))
+```
+Never use `self.mobjects[1:]` for cleanup — it is fragile. Always use explicit VGroups.
+
+## Avoid Emoji in Text() Objects
+
+Do NOT use emoji characters (e.g., "") inside `Text()` — they fail silently or cause font errors.
+Use plain ASCII or Portuguese text alternatives instead.
+
+## Section Title Pattern (landscape, confirmed)
+
+```python
+def _section_title(self, text: str):
+    title_card = Text(text, font_size=52, color=WHITE, weight=BOLD)
+    title_card.move_to(ORIGIN)
+    underline = Line(
+        title_card.get_left() + DOWN * 0.55,
+        title_card.get_right() + DOWN * 0.55,
+        color=YELLOW, stroke_width=3,
+    )
+    card_group = VGroup(title_card, underline)
+    self.play(FadeIn(title_card, shift=UP * 0.2), Create(underline), run_time=0.6)
+    self.wait(0.8)
+    self.play(card_group.animate.scale(0.55).to_edge(UP, buff=0.2), run_time=0.5)
+    return card_group
+```
+Returns the VGroup so each segment can include it in its own `FadeOut` cleanup.
+
+## Multi-segment Long Video Structure
+
+For long landscape videos (>3 min), split each topic into a `_seg<N>_name()` method.
+Each method: (1) calls `_section_title()`, (2) does animations, (3) fades out everything
+including the seg_title at the end. `construct()` calls each method in sequence.
+
 ## Details
 
 - See `patterns.md` for reusable snippets.
