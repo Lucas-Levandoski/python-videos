@@ -42,6 +42,42 @@ class Main(Scene):
         return VGroup(rect, lbl)
 
     # ------------------------------------------------------------------
+    # Helper: build a token cell with numeric ID shown below
+    # Returns a VGroup with [colored_cell, id_box] stacked vertically
+    # ------------------------------------------------------------------
+    def make_token_cell_with_id(self, text, token_id, color,
+                                font_size=30, rect_height=0.70, padding=0.22,
+                                id_font_size=18):
+        # Main colored cell (texto do token)
+        colored_cell = self.make_token_cell(
+            text, color, font_size=font_size,
+            rect_height=rect_height, padding=padding
+        )
+
+        # ID label text
+        id_text = Text(f"ID: {token_id}", font_size=id_font_size,
+                       color=GREY_B, weight=NORMAL)
+
+        # Grey box for the ID — same width as main cell, smaller height
+        id_box_w = colored_cell.width
+        id_box_h = id_font_size / 72.0 * 1.55 + 0.14  # proportional height
+        id_box = RoundedRectangle(
+            width=id_box_w,
+            height=id_box_h,
+            corner_radius=0.07,
+            color=GREY_D,
+            fill_color=GREY_D,
+            fill_opacity=0.55,
+            stroke_width=1.0,
+        )
+        id_text.move_to(id_box.get_center())
+
+        id_group = VGroup(id_box, id_text)
+        id_group.next_to(colored_cell, DOWN, buff=0.04)
+
+        return VGroup(colored_cell, id_group)
+
+    # ------------------------------------------------------------------
     # Helper: build a horizontal bar of token cells
     # ------------------------------------------------------------------
     def make_token_bar(self, tokens, colors=None, font_size=30,
@@ -54,6 +90,27 @@ class Main(Scene):
                                         font_size=font_size,
                                         rect_height=rect_height,
                                         padding=padding)
+            bar.add(cell)
+        bar.arrange(RIGHT, buff=buff)
+        return bar
+
+    # ------------------------------------------------------------------
+    # Helper: build a bar of token cells WITH IDs shown below each
+    # ------------------------------------------------------------------
+    def make_token_bar_with_ids(self, tokens, token_ids, colors=None,
+                                font_size=26, rect_height=0.65,
+                                padding=0.20, buff=0.08, id_font_size=16):
+        if colors is None:
+            colors = TOKEN_COLORS
+        bar = VGroup()
+        for i, (tok, tid) in enumerate(zip(tokens, token_ids)):
+            cell = self.make_token_cell_with_id(
+                tok, tid, colors[i % len(colors)],
+                font_size=font_size,
+                rect_height=rect_height,
+                padding=padding,
+                id_font_size=id_font_size,
+            )
             bar.add(cell)
         bar.arrange(RIGHT, buff=buff)
         return bar
@@ -231,6 +288,7 @@ class Main(Scene):
 
     # ------------------------------------------------------------------
     # TOKEN ≠ PALAVRA (0:23 – 0:43)
+    # Cada flash-card mostra: caixa colorida (texto) + caixa cinza (ID numérico)
     # ------------------------------------------------------------------
     def _token_vs_word(self):
         title = Text("Token  ≠  palavra", font_size=44, color=YELLOW, weight=BOLD)
@@ -238,37 +296,44 @@ class Main(Scene):
         self.play(FadeIn(title, shift=DOWN * 0.3), run_time=0.5)
 
         examples = [
-            # (word_text,  tokens_list,  label_text,            token_colors)
+            # (word_text, tokens_list, token_ids, label_text, token_colors)
             (
                 "gato",
                 ["gato"],
-                "1 token",
+                [85316],
+                "1 token = 1 número",
                 [BLUE],
             ),
             (
                 "inacreditável",
                 ["in", "acredit", "ável"],
-                "3 tokens",
+                [258, 36735, 26193],
+                "3 tokens = 3 números",
                 [BLUE, TEAL, GREEN],
             ),
             (
-                "Olá, mundo!",
+                'Olá, mundo!',
                 ["Ol", "á", ",", "▁mundo", "!"],
+                [7817, 4341, 11, 8440, 0],
                 "pontuação = token próprio",
                 [BLUE, GREEN, YELLOW, TEAL, ORANGE],
             ),
         ]
 
-        for word_text, toks, lbl_text, tok_colors in examples:
+        for word_text, toks, tok_ids, lbl_text, tok_colors in examples:
             # Word text
             word = Text(word_text, font_size=48, color=WHITE)
-            word.move_to(UP * 3.5)
+            word.move_to(UP * 4.2)
 
-            # Token bar (build before arrow so we can target it)
-            bar = self.make_token_bar(
-                toks, colors=tok_colors, font_size=30, rect_height=0.70
+            # Token bar with ID boxes below each token
+            bar = self.make_token_bar_with_ids(
+                toks, tok_ids,
+                colors=tok_colors,
+                font_size=28,
+                rect_height=0.68,
+                id_font_size=17,
             )
-            bar.move_to(UP * 1.5)
+            bar.move_to(UP * 1.8)
             if bar.width > 7.8:
                 bar.scale(7.8 / bar.width)
 
@@ -283,8 +348,8 @@ class Main(Scene):
             )
 
             # Label below bar
-            lbl = Text(lbl_text, font_size=32, color=GREEN)
-            lbl.next_to(bar, DOWN, buff=0.35)
+            lbl = Text(lbl_text, font_size=30, color=GREEN)
+            lbl.next_to(bar, DOWN, buff=0.40)
 
             self.play(FadeIn(word, shift=DOWN * 0.2), run_time=0.5)
             self.play(Create(arrow), run_time=0.3)
@@ -313,14 +378,17 @@ class Main(Scene):
         sec_title.move_to(UP * 6.8)
         self.play(FadeIn(sec_title, shift=DOWN * 0.3), run_time=0.5)
 
-        # ---- STEP 1: input tokens enter the network ----
+        # ---- STEP 1: input tokens enter the network (com IDs) ----
         self._gen_step1(sec_title)
 
-        # ---- STEP 2: probability list ----
+        # ---- STEP 2: probability list (com IDs na lista) ----
         self._gen_step2()
 
-        # ---- STEP 3: token selected, cycle repeats ----
-        self._gen_step3()
+        # ---- STEP 3 (NOVO): ID vencedor se transforma em texto ----
+        self._gen_step3_decode()
+
+        # ---- STEP 4 (antigo step3): token voa para a sequência ----
+        self._gen_step4()
 
         self.play(FadeOut(sec_title), run_time=0.4)
 
@@ -329,17 +397,19 @@ class Main(Scene):
         step_lbl.next_to(sec_title, DOWN, buff=0.25)
         self.play(FadeIn(step_lbl), run_time=0.4)
 
-        # Input token bar
+        # Input token bar com IDs abaixo de cada token
         input_tokens = ["Int", "el", "ig", "ência"]
-        in_bar = self.make_token_bar(
-            input_tokens,
+        input_ids    = [5317,  301,  328,  9808]
+        in_bar = self.make_token_bar_with_ids(
+            input_tokens, input_ids,
             colors=TOKEN_COLORS[:4],
-            font_size=26,
-            rect_height=0.62,
+            font_size=24,
+            rect_height=0.60,
+            id_font_size=15,
         )
-        in_bar.move_to(UP * 4.2)
-        if in_bar.width > 3.8:
-            in_bar.scale(3.8 / in_bar.width)
+        in_bar.move_to(UP * 4.5)
+        if in_bar.width > 4.2:
+            in_bar.scale(4.2 / in_bar.width)
 
         # Neural network box (stylized)
         nn_box = self._make_nn_box()
@@ -377,7 +447,7 @@ class Main(Scene):
 
         self.wait(0.5)
 
-        # Store refs for next step
+        # Store refs for next steps
         self._in_bar = in_bar
         self._nn_box = nn_box
         self._arrow_in = arrow_in
@@ -441,13 +511,20 @@ class Main(Scene):
             run_time=0.4,
         )
 
-        # Probability list appears to the right/below the nn box
+        # Label acima da lista: saída da IA = número
+        output_label = Text("saída da IA = número", font_size=26, color=YELLOW)
+        output_label.next_to(self._nn_box, DOWN, buff=0.35)
+
+        self.play(FadeIn(output_label, shift=DOWN * 0.15), run_time=0.4)
+
+        # Probability list com "ID XXXX  ▁texto  ████ XX%"
+        # Usamos make_prob_row mas o token_text já inclui o ID na frente
         prob_data = [
-            ("▁artificial", 42, True),
-            ("▁incrível",   18, False),
-            ("▁muda",       11, False),
-            ("▁é",           7, False),
-            ("...",          4, False),
+            ("ID 9578  ▁artificial", 42, True),
+            ("ID 1079  ▁incrível",   18, False),
+            ("ID 2724  ▁muda",       11, False),
+            ("ID  374  ▁é",           7, False),
+            ("...",                   4, False),
         ]
 
         rows = VGroup()
@@ -455,24 +532,24 @@ class Main(Scene):
             bar_color = YELLOW if highlighted else GREEN
             row = self.make_prob_row(
                 tok_text, pct,
-                max_bar_width=2.8,
+                max_bar_width=2.4,
                 bar_color=bar_color,
-                font_size=24,
+                font_size=22,
                 highlighted=highlighted,
             )
             rows.add(row)
 
-        rows.arrange(DOWN, buff=0.22, aligned_edge=LEFT)
-        rows.next_to(self._nn_box, DOWN, buff=0.55)
-        rows.shift(RIGHT * 0.2)
+        rows.arrange(DOWN, buff=0.20, aligned_edge=LEFT)
+        rows.next_to(output_label, DOWN, buff=0.30)
+        rows.shift(RIGHT * 0.1)
 
         if rows.width > 8.2:
             rows.scale(8.2 / rows.width)
 
-        # Arrow from nn box to prob list
+        # Arrow from nn box to output label
         arrow_out = Arrow(
             start=self._nn_box.get_bottom() + DOWN * 0.05,
-            end=rows.get_top() + UP * 0.05,
+            end=output_label.get_top() + UP * 0.05,
             color=GREEN,
             stroke_width=2.5,
             buff=0.05,
@@ -488,7 +565,7 @@ class Main(Scene):
         )
         self.wait(1.0)
 
-        # Highlight the top entry
+        # Highlight the top entry (ID 9578 / ▁artificial)
         top_row = rows[0]
         self.play(
             top_row.animate.scale(1.08),
@@ -502,10 +579,12 @@ class Main(Scene):
 
         self._rows = rows
         self._arrow_out = arrow_out
+        self._output_label = output_label
         self._step_lbl2 = step_lbl2
 
-    def _gen_step3(self):
-        step_lbl3 = Text("Passo 3: escolha e repetição", font_size=30, color=GREY_A)
+    def _gen_step3_decode(self):
+        """Passo 3 (NOVO): o ID vencedor (9578) é decodificado para texto '▁artificial'."""
+        step_lbl3 = Text("Passo 3: número → texto", font_size=30, color=GREY_A)
         step_lbl3.move_to(self._step_lbl2.get_center())
 
         self.play(
@@ -514,25 +593,124 @@ class Main(Scene):
             run_time=0.4,
         )
 
-        # The winning token flies left and joins the input sequence
-        # Make a copy of the top probability row token label
-        winning_token = "▁artificial"
-        winner_cell = self.make_token_cell(
-            winning_token, YELLOW, font_size=26, rect_height=0.62
-        )
-        # Start at the top prob row position
-        winner_cell.move_to(self._rows[0].get_center())
-        self.add(winner_cell)
-
-        # Hide the probability rows
+        # Esconder a lista de probabilidades e a seta de saída
         self.play(
             FadeOut(self._rows),
             FadeOut(self._arrow_out),
+            FadeOut(self._output_label),
             run_time=0.4,
         )
 
-        # Animate winner flying to join the input bar (above nn box)
-        # New extended input bar: original 4 + winner
+        # --- Montar a cena de decodificação centralizada ---
+        # 1) Número vencedor em destaque (amarelo)
+        id_text = Text("9578", font_size=72, color=YELLOW, weight=BOLD)
+        id_box = RoundedRectangle(
+            width=id_text.width + 0.50,
+            height=id_text.height + 0.28,
+            corner_radius=0.16,
+            color=YELLOW,
+            fill_color=YELLOW,
+            fill_opacity=0.15,
+            stroke_width=2.5,
+        )
+        id_box.move_to(ORIGIN + DOWN * 2)
+        id_text.move_to(id_box.get_center())
+        id_group = VGroup(id_box, id_text)
+
+        id_label = Text("ID escolhido", font_size=24, color=GREY_A)
+        id_label.next_to(id_group, UP, buff=0.18)
+
+        self.play(
+            FadeIn(id_group, scale=0.8),
+            FadeIn(id_label),
+            run_time=0.6,
+        )
+        self.wait(0.4)
+
+        # 2) Seta com label "vocabulário"
+        arrow_decode = Arrow(
+            start=id_group.get_bottom() + DOWN * 0.05,
+            end=id_group.get_bottom() + DOWN * 1.8,
+            color=GREY_A,
+            stroke_width=2.5,
+            buff=0.05,
+        )
+        vocab_label = Text("vocabulário", font_size=22, color=GREY_A)
+        vocab_label.next_to(arrow_decode, RIGHT, buff=0.12)
+
+        self.play(
+            GrowArrow(arrow_decode),
+            FadeIn(vocab_label, shift=DOWN * 0.15),
+            run_time=0.7,
+        )
+        self.wait(0.3)
+
+        # 3) Texto decodificado aparece abaixo da seta
+        decoded_text = Text("▁artificial", font_size=56, color=GREEN, weight=BOLD)
+        decoded_box = RoundedRectangle(
+            width=decoded_text.width + 0.46,
+            height=decoded_text.height + 0.26,
+            corner_radius=0.14,
+            color=GREEN,
+            fill_color=GREEN,
+            fill_opacity=0.18,
+            stroke_width=2.5,
+        )
+        decoded_box.next_to(arrow_decode, DOWN, buff=0.15)
+        decoded_text.move_to(decoded_box.get_center())
+        decoded_group = VGroup(decoded_box, decoded_text)
+
+        self.play(
+            FadeIn(decoded_group, scale=0.8, shift=DOWN * 0.2),
+            run_time=0.6,
+        )
+        self.wait(0.4)
+
+        # 4) Flash: pulso de opacidade para enfatizar o momento chave
+        self.play(
+            decoded_group.animate.set_fill(GREEN, opacity=0.5).set_stroke(GREEN, width=4),
+            run_time=0.3,
+        )
+        self.play(
+            decoded_group.animate.set_fill(GREEN, opacity=0.18).set_stroke(GREEN, width=2.5),
+            run_time=0.3,
+        )
+        self.wait(0.7)
+
+        # Guardar refs e o nome do token decodificado para o próximo passo
+        self._decode_group = VGroup(
+            id_group, id_label, arrow_decode, vocab_label, decoded_group
+        )
+        self._decoded_text_str = "▁artificial"
+        self._step_lbl3 = step_lbl3
+
+    def _gen_step4(self):
+        """Passo 4 (antigo step3): token decodificado voa para a sequência de entrada."""
+        step_lbl4 = Text("Passo 4: escolha e repetição", font_size=30, color=GREY_A)
+        step_lbl4.move_to(self._step_lbl3.get_center())
+
+        self.play(
+            FadeOut(self._step_lbl3),
+            FadeIn(step_lbl4),
+            run_time=0.4,
+        )
+
+        # Criar uma cópia do token decodificado para voar até a barra
+        winning_token = self._decoded_text_str
+        winner_cell = self.make_token_cell(
+            winning_token, YELLOW, font_size=26, rect_height=0.62
+        )
+        # Posicionar no centro da cena de decodificação
+        winner_cell.move_to(self._decode_group.get_center())
+        self.add(winner_cell)
+
+        # Esconder a cena de decodificação
+        self.play(
+            FadeOut(self._decode_group),
+            run_time=0.4,
+        )
+
+        # Barra de entrada expandida: 4 originais + vencedor
         new_tokens = ["Int", "el", "ig", "ência", "▁artificial"]
         new_colors = TOKEN_COLORS[:4] + [YELLOW]
         new_bar = self.make_token_bar(
@@ -542,7 +720,7 @@ class Main(Scene):
         if new_bar.width > 5.5:
             new_bar.scale(5.5 / new_bar.width)
 
-        # Fly winner to slot 4 position in new_bar
+        # Token voa para a posição do slot 4 na nova barra
         target_pos = new_bar[4].get_center()
 
         self.play(
@@ -557,7 +735,7 @@ class Main(Scene):
         )
         self.wait(0.3)
 
-        # --- Fast-forward: 2 more cycles shown quickly ---
+        # --- Fast-forward: 2 ciclos adicionais mostrados rapidamente ---
         cycle_data = [
             (["Int", "el", "ig", "ência", "▁artificial", "▁muda"],
              TOKEN_COLORS[:4] + [YELLOW, ORANGE],
@@ -569,7 +747,7 @@ class Main(Scene):
 
         current_bar = new_bar
         for extended_tokens, ext_colors, next_tok_text, next_tok_color in cycle_data:
-            # Show a quick flash of the nn box processing
+            # Flash rápido na caixa da rede neural simulando processamento
             self.play(
                 self._nn_box.animate.set_fill(BLUE_D, opacity=0.7),
                 run_time=0.2,
@@ -578,13 +756,6 @@ class Main(Scene):
                 self._nn_box.animate.set_fill(BLUE_E, opacity=0.35),
                 run_time=0.2,
             )
-
-            # Animate new token appearing
-            new_cell = self.make_token_cell(
-                next_tok_text, next_tok_color, font_size=24, rect_height=0.58
-            )
-            new_cell.move_to(self._nn_box.get_center() + DOWN * 1.2)
-            new_cell.set_opacity(0)
 
             ext_bar = self.make_token_bar(
                 extended_tokens, colors=ext_colors, font_size=24, rect_height=0.58
@@ -601,7 +772,7 @@ class Main(Scene):
             current_bar = ext_bar
             self.wait(0.25)
 
-        # Final assembled phrase
+        # Frase final completa
         final_tokens = ["Int", "el", "ig", "ência", "▁artificial", "▁muda", "▁o", "▁mundo"]
         final_colors = TOKEN_COLORS
         final_bar = self.make_token_bar(
@@ -626,8 +797,8 @@ class Main(Scene):
         )
         self.wait(0.8)
 
-        # Fade out the whole mechanism
-        to_remove = VGroup(self._nn_box, self._arrow_in, final_bar, step_lbl3)
+        # Fade out de todo o mecanismo generativo
+        to_remove = VGroup(self._nn_box, self._arrow_in, final_bar, step_lbl4)
         self.play(FadeOut(to_remove), run_time=0.6)
 
     # ------------------------------------------------------------------

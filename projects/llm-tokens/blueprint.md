@@ -57,36 +57,50 @@ This is shattered in the first 3 seconds by showing a sentence fragmenting into 
 
 ---
 
-### 3. Token ≠ Palavra (0:23–0:43)
+### 3. Token ≠ Palavra — e token é um número (0:23–0:43)
 
-Three flash-card examples using **real cl100k_base splits**:
+Three flash-card examples using **real cl100k_base splits**, each revealing the numeric ID:
 
-| Word | Tokens | Count |
-|------|--------|-------|
-| `gato` | `gato` | 1 token |
-| `inacreditável` | `in` + `acredit` + `ável` | 3 tokens |
-| `Olá, mundo!` | `Ol` + `á` + `,` + ` mundo` + `!` | 5 tokens |
+| Word | Tokens (string) | Token IDs | Count |
+|------|-----------------|-----------|-------|
+| `gato` | `gato` | `85316` | 1 token |
+| `inacreditável` | `in` + `acredit` + `ável` | `258` + `36735` + `26193` | 3 tokens |
+| `Olá, mundo!` | `Ol` + `á` + `,` + ` mundo` + `!` | `37042` + `101` + `11` + `9578` + `0` | 5 tokens |
 
-> ⚠️ Scriptwriter must verify splits against cl100k_base or o200k_base before finalizing.
+> ⚠️ Scriptwriter must verify splits against cl100k_base or o200k_base before finalizing. Token IDs above are illustrative — use actual IDs from the tokenizer.
 
-**Key insight to land:** punctuation is its own token; common words may be 1 token; rare/long words split into subword pieces.
+**Key insights to land (two layers):**
+1. Punctuation is its own token; common words may be 1 token; rare/long words split into subword pieces.
+2. **Each token string is just the human-readable label for a number.** The model never sees "gato" — it sees `85316`. The string representation is only for display.
+
+**Visual design:** each flash-card shows the token cell in two rows:
+- Top row: colored box with string label (e.g., `"gato"`)
+- Bottom row: grey box with numeric ID (e.g., `ID: 85316`)
+
+This two-row design physically separates "what humans read" from "what the model processes".
 
 ---
 
 ### 4. Mecanismo Generativo (0:43–1:18) — most important
 
-Three visual sub-steps:
+Four visual sub-steps (expanded to make numeric output explicit):
 
-**Step 1 — Tokens enter the network:**
-- Token boxes flow into a stylized neural network diagram
+**Step 1 — Tokens (as numbers) enter the network:**
+- Token boxes flow into a stylized neural network diagram, each showing its numeric ID
 - Network nodes light up (FadeIn animations)
 
-**Step 2 — Probability list appears:**
-- Right side shows candidate next-tokens with probability bars
+**Step 2 — Probability distribution over IDs:**
+- Output shows a list of candidate **token IDs** with probability bars
+- Each row: `ID XXXXX | bar | %` — the model is choosing a number, not a word
 - Top candidate highlighted in YELLOW
 
-**Step 3 — Token selected, cycle repeats:**
-- Winning token flies back into the input sequence
+**Step 3 — Winning number is decoded to string:**
+- The winning ID (e.g., `9578`) transforms visually into its string label (e.g., `" mundo"`)
+- Small label appears: `"ID → string"` or a vocabulary lookup arrow
+- This step is the critical moment: the model outputs a number; humans decode it
+
+**Step 4 — Decoded string joins the sequence, cycle repeats:**
+- The decoded string token joins the input sequence
 - Cycle runs 2–3 more times in fast-forward
 - Assembled phrase builds up token by token
 

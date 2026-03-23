@@ -4,7 +4,8 @@
       "Bash(manim:*)",
       "Bash(apt-get install:*)",
       "Bash(sudo apt-get:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "WebSearch"
     ]
   }
 }

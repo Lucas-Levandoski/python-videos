@@ -39,37 +39,41 @@
 [VISUAL: Título fixo no topo: "Token ≠ Palavra" em AMARELO]
 
 **NARRADOR:**
-> Veja a diferença.
+> Veja a diferença. E preste atenção: cada token é, na verdade, um número.
 
 ---
 
 **Flash-card 1:**
 
-[VISUAL: Palavra "gato" aparece → seta para baixo → 1 caixa azul com "gato"]
-[VISUAL: Label verde abaixo: "1 token"]
+[VISUAL: Palavra "gato" aparece → seta para baixo → caixa dupla:]
+- Linha superior: caixa AZUL com texto `"gato"`
+- Linha inferior: caixa CINZA com `ID: 85316`
+[VISUAL: Label verde abaixo: "1 token = 1 número"]
 
 **NARRADOR:**
-> "Gato" — um token só.
+> "Gato" — um token. Para a IA, esse token é o número 85316.
 
 ---
 
 **Flash-card 2:**
 
-[VISUAL: FadeOut do anterior. Palavra "inacreditável" aparece → seta → 3 caixas: "in" | "acredit" | "ável"]
-[VISUAL: Label verde: "3 tokens"]
+[VISUAL: FadeOut do anterior. Palavra "inacreditável" aparece → seta → 3 pares de caixas:]
+- `"in"` / `ID: 258` | `"acredit"` / `ID: 36735` | `"ável"` / `ID: 26193`
+[VISUAL: Label verde: "3 tokens = 3 números"]
 
 **NARRADOR:**
-> "Inacreditável" — três tokens.
+> "Inacreditável" — três tokens. Três números diferentes.
 
 ---
 
 **Flash-card 3:**
 
-[VISUAL: FadeOut. "Olá, mundo!" aparece → seta → 5 caixas: "Ol" | "á" | "," | " mundo" | "!"]
-[VISUAL: Label verde: "pontuação = token próprio"]
+[VISUAL: FadeOut. "Olá, mundo!" aparece → seta → destaque na vírgula:]
+- `","` / `ID: 11` em destaque AMARELO
+[VISUAL: Label: "pontuação = número próprio"]
 
 **NARRADOR:**
-> Até a vírgula é um token separado.
+> Até a vírgula tem o seu próprio número no vocabulário da IA.
 
 ---
 
@@ -82,42 +86,52 @@
 
 ---
 
-**Passo 1 — Tokens entram na rede:**
+**Passo 1 — Tokens (como números) entram na rede:**
 
-[VISUAL: 4 caixas de token à esquerda/topo: "Int" | "el" | "ig" | "ência"]
+[VISUAL: 4 caixas de token com dois níveis: texto acima (`"Int"`, `"el"`, `"ig"`, `"ência"`) e ID abaixo (`258`, `301`, `328`, `9808`)]
 [VISUAL: Setas fluem para um diagrama de rede neural estilizado no centro — nós acendem em sequência]
 
 **NARRADOR:**
-> Os tokens de entrada são processados pela rede neural.
+> A rede não recebe letras. Ela recebe números — os IDs de cada token.
 
 ---
 
-**Passo 2 — Lista de probabilidades aparece:**
+**Passo 2 — Saída: uma lista de IDs com probabilidades:**
 
-[VISUAL: À direita/abaixo da rede, lista vertical de candidatos com barras de probabilidade:]
+[VISUAL: À direita/abaixo da rede, lista vertical de candidatos — cada linha mostra ID + texto + barra:]
 ```
-▁artificial   ████████ 42%
-▁incrível     ███░░░░░ 18%
-▁muda         ██░░░░░░ 11%
-▁é            █░░░░░░░  7%
+ID 9578  ▁artificial   ████████ 42%
+ID 1079  ▁incrível     ███░░░░░ 18%
+ID 2724  ▁muda         ██░░░░░░ 11%
+ID  374  ▁é            █░░░░░░░  7%
 ...
 ```
-[VISUAL: Linha do topo destacada com borda AMARELA, leve aumento de escala]
+[VISUAL: Linha do topo (ID 9578) destacada com borda AMARELA]
+[VISUAL: Label acima da lista: "saída da IA = número"]
 
 **NARRADOR:**
-> A rede calcula a probabilidade de cada possível próximo token.
+> A rede calcula qual número vem a seguir. O output é um número — não uma palavra.
 
 ---
 
-**Passo 3 — Token vencedor, ciclo se repete:**
+**Passo 3 — Número vencedor é decodificado para texto:**
 
-[VISUAL: O token "▁artificial" voa da lista e se junta à sequência de entrada]
-[VISUAL: Nova sequência agora tem 5 tokens. O ciclo roda mais 2 vezes em fast-forward]
-[VISUAL: A frase vai se construindo token por token: "Inteligência" → "Inteligência artificial" → "Inteligência artificial muda" → ...]
+[VISUAL: O `ID 9578` em destaque AMARELO se transforma visualmente → `" artificial"` (texto aparecem sobre o número)]
+[VISUAL: Seta com label: `"vocabulário: 9578 → artificial"`]
 
 **NARRADOR:**
-> O mais provável é escolhido.
-> E o ciclo se repete — um pedacinho de cada vez.
+> Esse número é consultado no vocabulário. Aí sim vira texto.
+
+---
+
+**Passo 4 — Texto decodificado entra na sequência, ciclo se repete:**
+
+[VISUAL: O token `" artificial"` voa e se junta à sequência de entrada]
+[VISUAL: Nova sequência agora tem 5 tokens. O ciclo roda mais 2 vezes em fast-forward]
+[VISUAL: A frase vai se construindo token por token]
+
+**NARRADOR:**
+> E o ciclo se repete — número, decodifica, próximo número.
 
 *(~3 segundos visual-only: ciclos em fast-forward)*
 
